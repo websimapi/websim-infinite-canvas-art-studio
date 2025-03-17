@@ -73,9 +73,10 @@ const App = () => {
 
     // Update presence on mouse move
     const handleMouseMove = (e) => {
-      const canvasRect = canvas.getBoundingClientRect();
-      const x = (e.clientX - canvasRect.left + viewOffset.x) / canvas.width * window.innerWidth;
-      const y = (e.clientY - canvasRect.top + viewOffset.y) / canvas.height * window.innerHeight;
+      if (!canvasRef.current) return;
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      const x = (e.clientX - canvasRect.left + viewOffset.x) / canvasRef.current.width * window.innerWidth;
+      const y = (e.clientY - canvasRect.top + viewOffset.y) / canvasRef.current.height * window.innerHeight;
       
       room.party.updatePresence({
         cursorX: e.clientX,
@@ -92,6 +93,7 @@ const App = () => {
     
     // Resize handler
     const handleResize = () => {
+      if (!canvasRef.current || !ctxRef.current) return;
       canvas.width = window.innerWidth * 2;
       canvas.height = window.innerHeight * 2;
       ctx.scale(2, 2);
@@ -106,7 +108,7 @@ const App = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
     };
-  }, [viewOffset]);
+  }, [viewOffset, color, lineWidth, tool]);
 
   const loadExistingDrawings = () => {
     if (!ctxRef.current) return;
@@ -136,6 +138,8 @@ const App = () => {
 
   const startDrawing = (e) => {
     if (isWelcomeVisible) return;
+    if (!canvasRef.current || !ctxRef.current) return;
+    
     if (!drawingStarted) {
       setDrawingStarted(true);
       if (musicRef.current) {
@@ -156,7 +160,7 @@ const App = () => {
     
     ctxRef.current.beginPath();
     ctxRef.current.moveTo(offsetX, offsetY);
-    ctxRef.current.strokeStyle = color;
+    ctxRef.current.strokeStyle = tool === 'eraser' ? '#1e1e1e' : color;
     ctxRef.current.lineWidth = lineWidth;
     
     isDrawingRef.current = true;
@@ -164,7 +168,7 @@ const App = () => {
     
     // Start a new path
     const currentPath = {
-      color,
+      color: tool === 'eraser' ? '#1e1e1e' : color,
       lineWidth,
       points: [{ x: offsetX, y: offsetY }]
     };
@@ -175,6 +179,8 @@ const App = () => {
 
   const draw = (e) => {
     if (isWelcomeVisible) return;
+    if (!canvasRef.current || !ctxRef.current) return;
+    
     if (tool === 'pan' && isPanning) {
       const newOffsetX = e.clientX - panStartRef.current.x;
       const newOffsetY = e.clientY - panStartRef.current.y;
@@ -199,6 +205,8 @@ const App = () => {
 
   const stopDrawing = () => {
     if (isWelcomeVisible) return;
+    if (!canvasRef.current || !ctxRef.current) return;
+    
     if (tool === 'pan') {
       setIsPanning(false);
       return;
@@ -249,16 +257,31 @@ const App = () => {
 
   // Handle touch events for mobile devices
   const handleTouchStart = (e) => {
+    if (!canvasRef.current || !ctxRef.current) return;
     e.preventDefault();
-    startDrawing(e);
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent('mousedown', {
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    });
+    startDrawing(mouseEvent);
   };
 
   const handleTouchMove = (e) => {
+    if (!canvasRef.current || !ctxRef.current) return;
     e.preventDefault();
-    draw(e);
+    if (!isDrawingRef.current && !isPanning) return;
+    
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent('mousemove', {
+      clientX: touch.clientX,
+      clientY: touch.clientY
+    });
+    draw(mouseEvent);
   };
 
   const handleTouchEnd = (e) => {
+    if (!canvasRef.current || !ctxRef.current) return;
     e.preventDefault();
     stopDrawing();
   };
@@ -387,4 +410,3 @@ const App = () => {
 // Render the App
 const root = createRoot(document.getElementById('app'));
 root.render(<App />);
-
