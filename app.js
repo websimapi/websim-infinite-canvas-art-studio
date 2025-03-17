@@ -61,8 +61,8 @@ const App = () => {
 
     // Set initial view to center
     setViewOffset({
-      x: -window.innerWidth / 2,
-      y: -window.innerHeight / 2
+      x: 0,
+      y: 0
     });
 
     // Load existing drawings
@@ -250,8 +250,8 @@ const App = () => {
     const canvasRect = canvasRef.current.getBoundingClientRect();
     
     return {
-      offsetX: (clientX - canvasRect.left + viewOffset.x) / 2,
-      offsetY: (clientY - canvasRect.top + viewOffset.y) / 2
+      offsetX: (clientX - canvasRect.left + viewOffset.x),
+      offsetY: (clientY - canvasRect.top + viewOffset.y)
     };
   };
 
